@@ -8,6 +8,7 @@ TagManager:
   - PickUp
   - Enemy
   - Wall
+  - PowerUpTimer
   layers:
   - Default
   - TransparentFX

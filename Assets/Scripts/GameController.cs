@@ -11,10 +11,13 @@ public class GameController : MonoBehaviour
     public Vector3 playerInitialPosition = new Vector3(40f, 2f, 40f);
     public GameObject playerPrefab;
     public GameObject powerUpPrefab;
+    public GameObject powerUpTimerPrefab;
     public GameObject pickUpPrefab;
     public GameObject enemyPrefab;
     public static int numEnemies = 4;
     public float enemyRespawnSeconds = 8f;
+    public float powerUpTimerRegenerateSeconds = 45f;
+    public float powerUpTimerAddSeconds = 5f;
     [Header("Score Settings")]
     public int enemyValue = 5;
     public int pickUpValue = 1;
@@ -42,8 +45,6 @@ public class GameController : MonoBehaviour
     private int score = 0;
     private float secondsRemainingInLevel;
 
-    private bool[,] wallCoordinates = new bool[,] { };
-
     private Text titleText;
     private Text timerText;
     private Text scoreText;
@@ -60,6 +61,8 @@ public class GameController : MonoBehaviour
         initializePowerUps();
         initializePickUps();
         initializeEnemies();
+
+        InvokeRepeating("GeneratePowerUpTimer", powerUpTimerRegenerateSeconds, powerUpTimerRegenerateSeconds);
     }
 
     public void AddToSecondsRemainingInLevel(float secs)
@@ -91,6 +94,17 @@ public class GameController : MonoBehaviour
     {
         AddToScore(powerUpValue);
     }
+
+    public void EatPowerUpTimer()
+    {
+        AddToSecondsRemainingInLevel(powerUpTimerAddSeconds);
+    }
+
+    private void GeneratePowerUpTimer()
+    {
+        Instantiate(powerUpTimerPrefab, playerInitialPosition, Quaternion.identity);
+    }
+
     private void AddToScore(int newScore)
     {
         if (!gameOver)
@@ -132,7 +146,7 @@ public class GameController : MonoBehaviour
         {
             if (pickUp != null)
             {
-                pickUp.SetActive(true);
+                pickUp.GetComponent<Renderer>().enabled = true;
             }
         }
         gameOver = false;

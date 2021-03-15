@@ -5,6 +5,7 @@ using UnityEngine;
 public class EnemyController : MonoBehaviour
 {
     public float speed = 10f;
+    public float directionChangeThreshold = 1f;
 
     private List<Vector3> randomDirections = new List<Vector3>();
     private Vector3 currentDirection;
@@ -15,13 +16,23 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         initializeRandomDirections();
-        changeDirection();
+        changeToRandomDirection();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(bounceOffWall)
+        RaycastHit hit;
+        // change directions if there is a wall within the threshold
+        if (Physics.Raycast(transform.position, currentDirection, out hit, directionChangeThreshold))
+        {
+            if(hit.transform.tag == "Wall")
+            {
+                changeToRandomDirection();
+            }
+        }
+
+        if (bounceOffWall)
         {
             transform.Translate(-lastDirection * speed * Time.deltaTime);
         } else
@@ -36,7 +47,7 @@ public class EnemyController : MonoBehaviour
         {
             case "Wall":
                 bounceOffWall = true;
-                changeDirection();
+                changeToRandomDirection();
                 break;
         }
     }
@@ -51,15 +62,20 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    private void changeDirection()
+    private Vector3 getRandomDirection()
+    {
+        Vector3 randomDirection;
+        do
+        {
+            randomDirection = randomDirections[Random.Range(0, randomDirections.Count)];
+        } while (randomDirection == lastDirection);
+        return randomDirection;
+    }
+
+    private void changeToRandomDirection()
     {
         lastDirection = currentDirection;
-        Vector3 randomDirection;
-        do {
-            randomDirection = randomDirections[Random.Range(0, randomDirections.Count - 1)];
-        } while(randomDirection == lastDirection); 
-
-        currentDirection = randomDirection;
+        currentDirection = getRandomDirection();
     }
     private void initializeRandomDirections()
     {

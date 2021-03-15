@@ -4,31 +4,30 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float thrust = 20.0f;
+    public float speed = 20.0f;
     public float powerUpSeconds = 8f;
     public Material poweredUpMaterial;
     [Header("Audio Clips")]
     public AudioClip eatPowerUpSFX;
     public AudioClip eatPickUpSFX;
+    public float eatPickUpSFXPitch = 0.8f;
     public AudioClip eatEnemySFX;
     public AudioClip deathByEnemySFX;
 
-    private Rigidbody rb;
-    private float movementX;
-    private float movementY;
+    private Vector3 curDirection = Vector3.zero;
 
     private float powerUpSecondsRemaining = 0f;
     private Material originalMaterial;
     private GameController gameController;
-    private AudioSource audio;
-
+    private AudioSource[] audioSources;
+    
     // Start is called before the first frame update
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
         originalMaterial = GetComponent<MeshRenderer>().material;
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
-        audio = GetComponent<AudioSource>();
+        audioSources = GetComponents<AudioSource>();
+        audioSources[1].pitch = eatPickUpSFXPitch;
     }
 
     // Update is called once per frame
@@ -43,26 +42,37 @@ public class PlayerController : MonoBehaviour
         {
             GetComponent<MeshRenderer>().material = originalMaterial;
         }
-        Camera.main.transform.position = new Vector3(gameObject.transform.position.x + 5, 15f, gameObject.transform.position.z - 15);
-        movementX = Input.GetAxis("Horizontal");
-        movementY = Input.GetAxis("Vertical");
+        if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) curDirection = Vector3.right;
+        if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) curDirection = Vector3.left;
+        if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) curDirection = Vector3.forward;
+        if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) curDirection = Vector3.back;
 
-        rb.AddForce(new Vector3(movementX, 0f, movementY) * thrust);
+        transform.Translate(curDirection * Time.deltaTime * speed);
     }
     private void OnTriggerEnter(Collider other)
     {
         switch (other.gameObject.tag)
         {
             case "PickUp":
-                other.gameObject.SetActive(false);
-                audio.PlayOneShot(eatPickUpSFX);
-                gameController.EatPickUp();
+                Renderer pickupRenderer = other.gameObject.GetComponent<Renderer>();
+                if (pickupRenderer.enabled)
+                {
+                    pickupRenderer.enabled = false;
+                    audioSources[0].PlayOneShot(eatPickUpSFX);
+                    gameController.EatPickUp();
+                }
                 break;
             case "PowerUp":
                 other.gameObject.SetActive(false);
-                audio.PlayOneShot(eatPowerUpSFX);
+                audioSources[1].PlayOneShot(eatPowerUpSFX);
                 gameController.EatPowerUp();
                 powerUpSecondsRemaining = powerUpSeconds;
+                break;
+            case "PowerUpTimer":
+                other.gameObject.SetActive(false);
+                Destroy(other.gameObject); // TODO: temporary for instantiateRepeating assignment requirement
+                audioSources[1].PlayOneShot(eatPowerUpSFX);
+                gameController.EatPowerUpTimer();
                 break;
         }
     }
@@ -73,15 +83,18 @@ public class PlayerController : MonoBehaviour
             case "Enemy":
                 if (powerUpSecondsRemaining > 0f)
                 {
-                    audio.PlayOneShot(eatEnemySFX);
+                    audioSources[0].PlayOneShot(eatEnemySFX);
                     collision.gameObject.SetActive(false);
                     gameController.EatEnemy();
                 }
                 else
                 {
-                    audio.PlayOneShot(deathByEnemySFX);
+                    audioSources[0].PlayOneShot(deathByEnemySFX);
                     gameController.GameOver();
                 }
+                break;
+            case "Wall":
+                curDirection = Vector3.zero;
                 break;
         }
     }
