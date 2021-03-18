@@ -4,11 +4,13 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 20.0f;
+    public float initialSpeed = 10.0f;
+    public float powerUpSpeed = 20.0f;
     public float powerUpSeconds = 8f;
     public Material poweredUpMaterial;
     [Header("Audio Clips")]
     public AudioClip eatPowerUpSFX;
+    public AudioClip eatPowerUpTimerSFX;
     public AudioClip eatPickUpSFX;
     public float eatPickUpSFXPitch = 0.8f;
     public AudioClip eatEnemySFX;
@@ -16,6 +18,7 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 curDirection = Vector3.zero;
 
+    private float speed;
     private float powerUpSecondsRemaining = 0f;
     private Material originalMaterial;
     private GameController gameController;
@@ -24,6 +27,7 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        speed = initialSpeed;
         originalMaterial = GetComponent<MeshRenderer>().material;
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
         audioSources = GetComponents<AudioSource>();
@@ -41,6 +45,7 @@ public class PlayerController : MonoBehaviour
         else
         {
             GetComponent<MeshRenderer>().material = originalMaterial;
+            speed = initialSpeed;
         }
         if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) curDirection = Vector3.right;
         if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) curDirection = Vector3.left;
@@ -66,12 +71,13 @@ public class PlayerController : MonoBehaviour
                 other.gameObject.SetActive(false);
                 audioSources[1].PlayOneShot(eatPowerUpSFX);
                 gameController.EatPowerUp();
+                speed = powerUpSpeed;
                 powerUpSecondsRemaining = powerUpSeconds;
                 break;
             case "PowerUpTimer":
                 other.gameObject.SetActive(false);
                 Destroy(other.gameObject); // TODO: temporary for instantiateRepeating assignment requirement
-                audioSources[1].PlayOneShot(eatPowerUpSFX);
+                audioSources[1].PlayOneShot(eatPowerUpTimerSFX);
                 gameController.EatPowerUpTimer();
                 break;
         }
@@ -93,9 +99,10 @@ public class PlayerController : MonoBehaviour
                     gameController.GameOver();
                 }
                 break;
-            case "Wall":
+/*            case "Wall":
                 curDirection = Vector3.zero;
                 break;
+*/
         }
     }
 }

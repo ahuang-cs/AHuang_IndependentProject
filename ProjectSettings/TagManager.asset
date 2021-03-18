@@ -9,6 +9,7 @@ TagManager:
   - Enemy
   - Wall
   - PowerUpTimer
+  - Intersection
   layers:
   - Default
   - TransparentFX

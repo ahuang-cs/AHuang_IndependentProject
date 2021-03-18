@@ -115,6 +115,7 @@ MonoBehaviour:
   powerUpSeconds: 8
   poweredUpMaterial: {fileID: 2100000, guid: eace523c3ffb2f24e82c5eff8b46d0b0, type: 2}
   eatPowerUpSFX: {fileID: 8300000, guid: e156a20f3c520e747b5bd9e7e4c8aeef, type: 3}
+  eatPowerUpTimerSFX: {fileID: 8300000, guid: b66b49a355429234084cc8f1b295fe21, type: 3}
   eatPickUpSFX: {fileID: 8300000, guid: 98f07d90fc01ccd48904f991ec1afc9a, type: 3}
   eatPickUpSFXPitch: 0.7
   eatEnemySFX: {fileID: 8300000, guid: 05ccb380d978a444bb350e107d69ee0a, type: 3}
