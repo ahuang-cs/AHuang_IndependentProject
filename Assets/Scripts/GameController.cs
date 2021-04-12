@@ -49,6 +49,8 @@ public class GameController : MonoBehaviour
     private Text timerText;
     private Text scoreText;
     private bool gameOver = true;
+    private bool levelInitialized = false;
+
 
     // Start is called before the first frame update
     void Start()
@@ -61,8 +63,6 @@ public class GameController : MonoBehaviour
         initializePowerUps();
         initializePickUps();
         initializeEnemies();
-
-        InvokeRepeating("GeneratePowerUpTimer", powerUpTimerRegenerateSeconds, powerUpTimerRegenerateSeconds);
     }
 
     public void AddToSecondsRemainingInLevel(float secs)
@@ -115,6 +115,8 @@ public class GameController : MonoBehaviour
     }
     public void GameOver()
     {
+        CancelInvoke("GeneratePowerUpTimer");
+
         if (secondsRemainingInLevel > 0f)
         {
             AddToScore((int)Mathf.Floor(secondsRemainingInLevel));
@@ -125,6 +127,8 @@ public class GameController : MonoBehaviour
     }
     public void ResetLevel()
     {
+        InvokeRepeating("GeneratePowerUpTimer", powerUpTimerRegenerateSeconds, powerUpTimerRegenerateSeconds);
+
         titleUI.SetActive(false);
         score = 0;
         scoreText.text = "Score: " + score;
@@ -136,8 +140,10 @@ public class GameController : MonoBehaviour
             enemyRespawnSecondsRemaining[i] = 0f;
         }
         secondsRemainingInLevel = secondsPerLevel;
+        player.SetActive(true);
         player.transform.position = playerInitialPosition;
         player.GetComponent<Rigidbody>().velocity = Vector3.zero;
+
         foreach (GameObject powerUp in powerUps)
         {
             powerUp.SetActive(true);
@@ -205,6 +211,7 @@ public class GameController : MonoBehaviour
     private void initializePlayer()
     {
         player = (GameObject)Instantiate(playerPrefab, playerInitialPosition, Quaternion.identity);
+        player.SetActive(false);
     }
     private void initializeEnemies()
     {
