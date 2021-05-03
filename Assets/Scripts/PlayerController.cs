@@ -7,7 +7,11 @@ public class PlayerController : MonoBehaviour
     public float initialSpeed = 10.0f;
     public float powerUpSpeed = 20.0f;
     public float powerUpSeconds = 8f;
+    public float powerUpForcefieldSeconds = 8f;
+    public float powerUpForcefieldRadius = 8f;
+    public float powerUpForcefieldSphereColliderRadius = 0.15f;
     public Material poweredUpMaterial;
+    public Material poweredUpForcefieldMaterial;
     [Header("Effects")]
     public AudioClip eatPowerUpSFX;
     public GameObject eatPowerUpParticleSystem;
@@ -19,20 +23,28 @@ public class PlayerController : MonoBehaviour
     public AudioClip deathByEnemySFX;
     public GameObject deathByEnemyParticleSystem;
 
-    private int curDirection = -1;
+    private Vector3 curDirection = Vector3.zero;
 
     private float speed;
     private float powerUpSecondsRemaining = 0f;
+    private bool powerUpForcefieldEnabled = false;
     private Material originalMaterial;
     private GameController gameController;
     private AudioSource[] audioSources;
     private MeshRenderer[] renderers;
     private Animator anim;
     private GameObject mainCamera;
+    private ParticleSystem poweredUpForcefieldParticleSystem;
+
+    private CapsuleCollider capsuleCollider;
+    private float originalSphereColliderRadius;
 
     // Start is called before the first frame update
     void Start()
     {
+        capsuleCollider = GetComponent<CapsuleCollider>();
+        originalSphereColliderRadius = capsuleCollider.radius;
+        poweredUpForcefieldParticleSystem = GetComponent<ParticleSystem>();
         speed = initialSpeed;
         anim = GetComponent<Animator>();
         mainCamera = GameObject.Find("Main Camera");
@@ -56,7 +68,10 @@ public class PlayerController : MonoBehaviour
     {
         mainCamera.transform.position = new Vector3(transform.position.x, 50f, transform.position.z - 20);
         
-        if (powerUpSecondsRemaining > 0f)
+        if (powerUpForcefieldEnabled) {
+            setRenderersMaterial(poweredUpForcefieldMaterial);
+        }
+        else if (powerUpSecondsRemaining > 0f )
         {
             setRenderersMaterial(poweredUpMaterial);
             powerUpSecondsRemaining -= Time.deltaTime;
@@ -70,31 +85,31 @@ public class PlayerController : MonoBehaviour
         {
             anim.SetTrigger("stop");
             anim.SetTrigger("right");
-            curDirection = 90;
+            curDirection = Vector3.right;
         }
         if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
         {
             anim.SetTrigger("stop");
             anim.SetTrigger("left");
-            curDirection = 270;
+            curDirection = Vector3.left;
         }
         if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
         {
             anim.SetTrigger("stop");
             anim.SetTrigger("up");
-            curDirection = 0;
+            curDirection = Vector3.forward;
         }
         if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S))
         {
             anim.SetTrigger("stop");
             anim.SetTrigger("down");
-            curDirection = 180;
+            curDirection = Vector3.back;
         }
 
-        if (curDirection >= 0)
+        if (curDirection != Vector3.zero)
         {
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, curDirection, 0), Time.deltaTime * speed);
-            transform.Translate(Vector3.forward * Time.deltaTime * speed);
+            //transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, curDirection, 0), Time.deltaTime * speed);
+            transform.Translate(curDirection * Time.deltaTime * speed);
         }
     }
     private void OnTriggerEnter(Collider other)
@@ -119,20 +134,43 @@ public class PlayerController : MonoBehaviour
                 playParticleSystemAndDestroy(eatPowerUpParticleSystem, new Vector3(other.gameObject.transform.position.x, 2, other.gameObject.transform.position.z));
                 break;
             case "PowerUpTimer":
-                other.gameObject.SetActive(false);
-                Destroy(other.gameObject); // TODO: temporary for instantiateRepeating assignment requirement
+                Destroy(other.gameObject);
                 audioSources[1].PlayOneShot(eatPowerUpTimerSFX);
                 gameController.EatPowerUpTimer();
                 playParticleSystemAndDestroy(eatPowerUpParticleSystem, new Vector3(other.gameObject.transform.position.x, 2, other.gameObject.transform.position.z));
                 break;
+            case "PowerUpForcefield":
+                StartCoroutine(eatPowerUpForcefield());
+                Destroy(other.gameObject);
+                audioSources[1].PlayOneShot(eatPowerUpTimerSFX);
+                playParticleSystemAndDestroy(eatPowerUpParticleSystem, new Vector3(other.gameObject.transform.position.x, 2, other.gameObject.transform.position.z));
+                break;
         }
     }
+
+    private IEnumerator eatPowerUpForcefield()
+    {
+        setRenderersMaterial(poweredUpForcefieldMaterial);
+        powerUpForcefieldEnabled = true;
+        poweredUpForcefieldParticleSystem.Play();
+        capsuleCollider.radius = powerUpForcefieldSphereColliderRadius;
+        yield return new WaitForSecondsRealtime(powerUpForcefieldSeconds);
+        capsuleCollider.radius = originalSphereColliderRadius;
+        powerUpForcefieldEnabled = false;
+        poweredUpForcefieldParticleSystem.Stop();
+        setRenderersMaterial(originalMaterial);
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         switch (collision.gameObject.tag)
         {
             case "Enemy":
-                if (powerUpSecondsRemaining > 0f)
+                if (powerUpForcefieldEnabled)
+                {
+                    // do nothing if forcefield powerup is on
+                }
+                else if (powerUpSecondsRemaining > 0f)
                 {
                     audioSources[0].PlayOneShot(eatEnemySFX);
                     collision.gameObject.SetActive(false);
@@ -144,7 +182,7 @@ public class PlayerController : MonoBehaviour
                     audioSources[0].PlayOneShot(deathByEnemySFX);
                     playParticleSystemAndDestroy(deathByEnemyParticleSystem, new Vector3(collision.gameObject.transform.position.x, 2, collision.gameObject.transform.position.z));
                     gameController.GameOver();
-                    curDirection = -1;
+                    curDirection = Vector3.zero;
                     gameObject.SetActive(false);
                 }
                 break;

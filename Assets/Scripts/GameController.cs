@@ -12,16 +12,20 @@ public class GameController : MonoBehaviour
     public GameObject playerPrefab;
     public GameObject powerUpPrefab;
     public GameObject powerUpTimerPrefab;
+    public GameObject powerUpForcefieldPrefab;
     public GameObject pickUpPrefab;
     public GameObject enemyPrefab;
     public static int numEnemies = 4;
     public float enemyRespawnSeconds = 8f;
     public float powerUpTimerRegenerateSeconds = 45f;
     public float powerUpTimerAddSeconds = 5f;
+    public float powerUpForcefieldRegenerateSeconds = 60f;
+
     [Header("Score Settings")]
     public int enemyValue = 5;
     public int pickUpValue = 1;
     public int powerUpValue = 0;
+
     [Header("UI Settings")]
     public GameObject titleUI;
     public GameObject scoreUIText;
@@ -35,6 +39,7 @@ public class GameController : MonoBehaviour
     private GameObject[,] pickUps = new GameObject[26, 30];
     private int rows = 26;
     private int cols = 29;
+    private int numPickups = 0;
 
     private float xOrigin = 4.75f;
     private float yOrigin = 1.75f;
@@ -49,8 +54,6 @@ public class GameController : MonoBehaviour
     private Text timerText;
     private Text scoreText;
     private bool gameOver = true;
-    private bool levelInitialized = false;
-
 
     // Start is called before the first frame update
     void Start()
@@ -63,6 +66,14 @@ public class GameController : MonoBehaviour
         initializePowerUps();
         initializePickUps();
         initializeEnemies();
+    }
+    private IEnumerator powerUpForcefieldGenerator()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(powerUpForcefieldRegenerateSeconds);
+            Instantiate(powerUpForcefieldPrefab, getRandomPickupPosition(), powerUpForcefieldPrefab.transform.rotation);
+        }
     }
 
     public void AddToSecondsRemainingInLevel(float secs)
@@ -77,18 +88,15 @@ public class GameController : MonoBehaviour
     public void EatPickUp()
     {
         AddToScore(pickUpValue);
+        numPickups--;
         checkWinCondition();
     }
     private void checkWinCondition()
     {
-        foreach (GameObject pickUp in pickUps)
+        if (numPickups <= 0)
         {
-            if (pickUp!= null && pickUp.activeSelf)
-            {
-                return;
-            }
+            GameOver();
         }
-        GameOver();
     }
     public void EatPowerUp()
     {
@@ -115,6 +123,7 @@ public class GameController : MonoBehaviour
     }
     public void GameOver()
     {
+        StopCoroutine(powerUpForcefieldGenerator());
         CancelInvoke("GeneratePowerUpTimer");
 
         if (secondsRemainingInLevel > 0f)
@@ -127,6 +136,7 @@ public class GameController : MonoBehaviour
     }
     public void ResetLevel()
     {
+        StartCoroutine(powerUpForcefieldGenerator());
         InvokeRepeating("GeneratePowerUpTimer", powerUpTimerRegenerateSeconds, powerUpTimerRegenerateSeconds);
 
         titleUI.SetActive(false);
@@ -230,6 +240,7 @@ public class GameController : MonoBehaviour
     }
     private void initializePickUps()
     {
+        numPickups = 0;
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < cols; col++)
@@ -240,9 +251,10 @@ public class GameController : MonoBehaviour
                     continue;
                 }
                 Vector3 pickUpCoordinates = new Vector3(xOrigin + row * xOffset, yOrigin, zOrigin + col * zOffset);
-                if (!Physics.CheckBox(pickUpCoordinates, new Vector3(.4375f, .4375f, .4375f)))
+                if (!Physics.CheckBox(pickUpCoordinates, new Vector3(0.6f, 0.6f, 0.6f)))
                 {
                     pickUps[row, col] = (GameObject)Instantiate(pickUpPrefab, pickUpCoordinates, Quaternion.identity);
+                    numPickups++;
                 }
             }
         }
