@@ -5,7 +5,7 @@ using UnityEngine.AI;
 
 public class EnemyController : MonoBehaviour
 {
-    public float levelUpSeconds = 30f;
+    public float levelUpSeconds = 60f;
 
     private NavMeshController navMeshController;
     private NavMeshAgent agent;
@@ -21,7 +21,6 @@ public class EnemyController : MonoBehaviour
         navMeshController = GameObject.Find("NavMeshController").GetComponent<NavMeshController>();
         agent = GetComponent<NavMeshAgent>();
         agent.updateRotation = false;
-        player = GameObject.FindGameObjectWithTag("Player");
         StartCoroutine(levelUp());
     }
 
@@ -41,6 +40,10 @@ public class EnemyController : MonoBehaviour
         {
             if (currentLevel > 0)
             {
+                if(player == null)
+                {
+                    player = GameObject.FindGameObjectWithTag("Player");
+                }
                 agent.SetDestination(player.transform.position);
             }
             else

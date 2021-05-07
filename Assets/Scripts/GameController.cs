@@ -40,6 +40,7 @@ public class GameController : MonoBehaviour
     private int rows = 26;
     private int cols = 29;
     private int numPickups = 0;
+    private int pickupsRemaining;
 
     private float xOrigin = 4.75f;
     private float yOrigin = 1.75f;
@@ -88,12 +89,12 @@ public class GameController : MonoBehaviour
     public void EatPickUp()
     {
         AddToScore(pickUpValue);
-        numPickups--;
+        pickupsRemaining--;
         checkWinCondition();
     }
     private void checkWinCondition()
     {
-        if (numPickups <= 0)
+        if (pickupsRemaining <= 0)
         {
             GameOver();
         }
@@ -165,6 +166,7 @@ public class GameController : MonoBehaviour
                 pickUp.GetComponent<Renderer>().enabled = true;
             }
         }
+        pickupsRemaining = numPickups;
         gameOver = false;
     }
 
@@ -240,7 +242,6 @@ public class GameController : MonoBehaviour
     }
     private void initializePickUps()
     {
-        numPickups = 0;
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < cols; col++)
