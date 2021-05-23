@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TeleporterController : MonoBehaviour
 {
-    public float teleportXOffset = 5f;
+    public float teleportXOffset = 3f;
 
     private float teleportXLocation;
 
@@ -28,6 +28,9 @@ public class TeleporterController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        other.gameObject.transform.position = new Vector3(teleportXLocation, other.gameObject.transform.position.y, other.gameObject.transform.position.z);
+        if (other is SphereCollider && other.CompareTag("Player"))
+        {
+            other.gameObject.transform.position = new Vector3(teleportXLocation, other.gameObject.transform.position.y, other.gameObject.transform.position.z);
+        }
     }
 }

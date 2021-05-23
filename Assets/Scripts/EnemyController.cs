@@ -26,7 +26,7 @@ public class EnemyController : MonoBehaviour
 
     IEnumerator levelUp()
     {
-        while(true)
+        while (true)
         {
             yield return new WaitForSecondsRealtime(levelUpSeconds);
             currentLevel++;
@@ -36,11 +36,11 @@ public class EnemyController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if ((!agent.pathPending && agent.remainingDistance < 0.5f) || Vector3.Distance(lastPosition,transform.position) < 0.01f )
+        if ((!agent.pathPending && agent.remainingDistance < 0.5f) || Vector3.Distance(lastPosition, transform.position) < 0.01f)
         {
             if (currentLevel > 0)
             {
-                if(player == null)
+                if (player == null)
                 {
                     player = GameObject.FindGameObjectWithTag("Player");
                 }
@@ -52,5 +52,17 @@ public class EnemyController : MonoBehaviour
             }
         }
         lastPosition = transform.position;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        // trade places with enemy on collision
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            Vector3 newPosition = collision.gameObject.transform.position;
+            collision.gameObject.transform.position = transform.position;
+            transform.position = newPosition;
+
+        }
     }
 }
