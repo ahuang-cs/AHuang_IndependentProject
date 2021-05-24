@@ -193,7 +193,9 @@ public class GameController : MonoBehaviour
             else if (!enemies[i].activeSelf && enemyRespawnSecondsRemaining[i] <= 0f)
             {
                 enemyRespawnSecondsRemaining[i] = enemyRespawnSeconds;
-                enemies[i].transform.position = getRandomPickupPosition();
+                Vector3 randPos = getRandomPickupPosition();
+                randPos.y = enemyPrefab.transform.position.y;
+                enemies[i].transform.position = randPos;
                 enemies[i].SetActive(true);
             }
         }
@@ -222,14 +224,16 @@ public class GameController : MonoBehaviour
     }
     private void initializePlayer()
     {
-        player = (GameObject)Instantiate(playerPrefab, playerInitialPosition, Quaternion.identity);
+        player = (GameObject)Instantiate(playerPrefab, playerInitialPosition, playerPrefab.transform.rotation);
         player.SetActive(false);
     }
     private void initializeEnemies()
     {
         for(int i = 0; i < numEnemies; i++)
         {
-            enemies[i] = (GameObject)Instantiate(enemyPrefab, getRandomPickupPosition(), Quaternion.identity);
+            Vector3 randPos = getRandomPickupPosition();
+            randPos.y = enemyPrefab.transform.position.y;
+            enemies[i] = (GameObject)Instantiate(enemyPrefab, randPos, enemyPrefab.transform.rotation);
             enemyRespawnSecondsRemaining[i] = enemyRespawnSeconds;
         }
     }
